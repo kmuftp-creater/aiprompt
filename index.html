@@ -1,0 +1,1484 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wardrobe Master - Tag Filter UI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@300;400;500;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="icon" href="favicon.png" type="image/png">
+    <style>
+        body {
+            font-family: 'Chiron GoRound TC', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        /* 動態主題色變數 */
+        :root {
+            --theme-color: #ec4899;
+            /* 預設粉色 */
+            --theme-glow: rgba(236, 72, 153, 0.3);
+        }
+
+        body.mode-clean {
+            --theme-color: #10b981;
+            --theme-glow: rgba(16, 185, 129, 0.3);
+        }
+
+        /* Green */
+        body.mode-sexy {
+            --theme-color: #ec4899;
+            --theme-glow: rgba(236, 72, 153, 0.3);
+        }
+
+        /* Pink */
+        body.mode-nsfw {
+            --theme-color: #ef4444;
+            --theme-glow: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Red */
+
+        /* 應用主題色的工具類 */
+        .text-theme {
+            color: var(--theme-color) !important;
+        }
+
+        .border-theme {
+            border-color: var(--theme-color) !important;
+        }
+
+        .bg-theme-soft {
+            background-color: var(--theme-glow);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: var(--theme-color);
+            border-radius: 3px;
+        }
+
+        .tab-active {
+            border-bottom: 2px solid var(--theme-color);
+            color: var(--theme-color);
+            background: rgba(31, 41, 55, 0.5);
+        }
+
+        .tab-inactive {
+            color: #9ca3af;
+        }
+
+        .tab-inactive:hover {
+            color: #d1d5db;
+            background: rgba(31, 41, 55, 0.3);
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1em;
+            transition: all 0.2s;
+        }
+
+        /* 當 Select 有值的時候，邊框變色 */
+        select.has-value {
+            border-color: var(--theme-color) !important;
+            box-shadow: 0 0 0 1px var(--theme-glow);
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        }
+
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+
+        body.modal-active {
+            overflow-x: hidden;
+            overflow-y: visible !important;
+        }
+
+        .mode-btn {
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            opacity: 0.6;
+        }
+
+        .mode-btn:hover {
+            opacity: 0.9;
+        }
+
+        .mode-active {
+            opacity: 1 !important;
+            border-color: white !important;
+            box-shadow: 0 0 15px var(--theme-glow);
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .field-label {
+            font-size: 11px;
+            color: #9ca3af;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            letter-spacing: 0.05em;
+        }
+
+        .history-item {
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .history-item:hover {
+            border-left-color: var(--theme-color);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .field-label i {
+            width: 16px;
+            text-align: center;
+            margin-right: 6px;
+            opacity: 0.8;
+            font-size: 12px;
+            color: var(--theme-color);
+            /* 圖示跟隨主題色 */
+        }
+
+        /* Toast 樣式 */
+        #toast-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            background-color: #1f2937;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid var(--theme-color);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast i {
+            color: var(--theme-color);
+        }
+    </style>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2868169306253385"
+        crossorigin="anonymous"></script>
+</head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-D5DZVB73Q9"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-D5DZVB73Q9');
+</script>
+
+<body class="bg-gray-950 text-gray-100 min-h-screen p-4 flex flex-col items-center mode-sexy">
+
+    <div id="toast-container"></div>
+
+    <div class="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <div
+            class="lg:col-span-12 flex flex-col md:flex-row justify-between items-center border-b border-gray-800 pb-4 gap-4">
+            <div class="flex items-center gap-4">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight">
+                        <span class="text-theme transition-colors duration-300">WARDROBE</span>
+                        <span class="text-white">MASTER</span>
+                    </h1>
+                    <p class="text-gray-500 text-xs tracking-widest mt-1"><i class="fas fa-robot mr-1"></i> AI TAG-BASED
+                        FILTER SYSTEM</p>
+                </div>
+                <button onclick="toggleModal()"
+                    class="hidden md:block ml-4 text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1 rounded-full border border-gray-600 transition">
+                    <i class="fas fa-info-circle mr-1"></i> 平台指南
+                </button>
+            </div>
+
+            <div class="flex bg-gray-900 p-1 rounded-lg border border-gray-700">
+                <button onclick="setMode('clean')" id="btn-clean"
+                    class="mode-btn bg-emerald-900 text-emerald-100 text-xs font-bold px-4 py-2 rounded-l flex items-center gap-2">
+                    <i class="fas fa-leaf text-emerald-400"></i>
+                    <div class="text-left leading-tight">
+                        <div>清純版</div>
+                        <div class="text-[9px] font-normal opacity-75">Safe Mode</div>
+                    </div>
+                </button>
+                <button onclick="setMode('sexy')" id="btn-sexy"
+                    class="mode-btn bg-pink-900 text-pink-100 text-xs font-bold px-4 py-2 flex items-center gap-2 border-l border-r border-gray-800">
+                    <i class="fas fa-heart text-pink-400"></i>
+                    <div class="text-left leading-tight">
+                        <div>性感版</div>
+                        <div class="text-[9px] font-normal opacity-75">Standard</div>
+                    </div>
+                </button>
+                <button onclick="setMode('nsfw')" id="btn-nsfw"
+                    class="mode-btn bg-red-900 text-red-100 text-xs font-bold px-4 py-2 rounded-r flex items-center gap-2">
+                    <i class="fas fa-fire text-red-400"></i>
+                    <div class="text-left leading-tight">
+                        <div>NSFW版</div>
+                        <div class="text-[9px] font-normal opacity-75">Uncensored</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <div class="lg:col-span-7 bg-gray-900 rounded-xl border border-gray-800 shadow-2xl">
+            <div class="flex border-b border-gray-800 bg-gray-900/95 backdrop-blur sticky top-0 z-20 rounded-t-xl">
+                <button onclick="scrollToSection('tab-identity')" id="btn-tab-identity"
+                    class="flex-1 py-4 text-sm font-bold tab-active transition-all">
+                    <i class="fas fa-user-circle mr-2"></i>角色設定
+                </button>
+                <button onclick="scrollToSection('tab-outfit')" id="btn-tab-outfit"
+                    class="flex-1 py-4 text-sm font-bold tab-inactive transition-all">
+                    <i class="fas fa-tshirt mr-2"></i>服裝穿搭
+                </button>
+                <button onclick="scrollToSection('tab-scene')" id="btn-tab-scene"
+                    class="flex-1 py-4 text-sm font-bold tab-inactive transition-all">
+                    <i class="fas fa-film mr-2"></i>場景與鏡頭
+                </button>
+            </div>
+            <div class="p-5">
+                <div class="mb-4 pb-2 border-b border-gray-800 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-theme"><i class="fas fa-user-circle mr-2"></i>角色設定</h2>
+                    <div class="flex gap-2">
+                        <button onclick="saveCharacter(this)"
+                            class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded border border-gray-600 transition flex items-center hover:text-white hover:border-gray-500">
+                            <i class="fas fa-save mr-1.5"></i> 儲存
+                        </button>
+                        <button onclick="loadCharacter(this)"
+                            class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded border border-gray-600 transition flex items-center hover:text-white hover:border-gray-500">
+                            <i class="fas fa-folder-open mr-1.5"></i> 讀取
+                        </button>
+                    </div>
+                </div>
+                <div id="tab-identity" class="space-y-5">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="field-label"><i class="fas fa-signature"></i> 角色名稱 (Name)</label>
+                            <input type="text" id="char-name" value="MyModel"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-theme font-mono text-sm focus:outline-none focus:border-current">
+                        </div>
+                        <div>
+                            <label class="field-label"><i class="fas fa-globe-asia"></i> 種族 / 國籍 (Race)</label>
+                            <select id="race"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="field-label"><i class="fas fa-birthday-cake"></i> 年齡 (Age)</label>
+                            <select id="char-age"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                        </div>
+                        <div>
+                            <label class="field-label"><i class="fas fa-ruler-vertical"></i> 身高 (Height)</label>
+                            <select id="body-height"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                        </div>
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="field-label text-theme"><i class="fas fa-shapes"></i> 體型氣質 (Type)</label>
+                            <select id="body-type"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                        </div>
+                    </div>
+
+                    <div id="bust-container" class="bg-gray-800/40 p-3 rounded border border-gray-700/50">
+                        <div class="flex justify-between mb-2">
+                            <label class="field-label text-theme !mb-0"><i class="fas fa-ruler-combined"></i> 三圍數據
+                                (Measurements)</label>
+                            <span id="bust-warn"
+                                class="text-[10px] text-emerald-400 font-bold hidden flex items-center"><i
+                                    class="fas fa-check-circle mr-1"></i> 清純模式已停用</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div><label class="text-[9px] text-gray-500 block mb-1">胸圍 (Bust)</label><select
+                                    id="body-bust"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                            </div>
+                            <div><label class="text-[9px] text-gray-500 block mb-1">腰圍 (Waist)</label><select
+                                    id="body-waist"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                            </div>
+                            <div><label class="text-[9px] text-gray-500 block mb-1">臀圍 (Hip)</label><select
+                                    id="body-hip"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        <div><label class="field-label"><i class="fas fa-cut"></i> 髮型 (Style)</label><select
+                                id="hair-style"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                        </div>
+                        <div><label class="field-label"><i class="fas fa-palette"></i> 髮色 (Color)</label><select
+                                id="hair-color"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                        </div>
+                        <div><label class="field-label"><i class="fas fa-eye"></i> 瞳色 (Eyes)</label><select
+                                id="eye-color"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                        </div>
+                        <div><label class="field-label"><i class="fas fa-smile"></i> 臉型 (Face)</label><select
+                                id="face-shape"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                        </div>
+                        <div><label class="field-label"><i class="fas fa-hand-sparkles"></i> 膚質 (Skin)</label><select
+                                id="skin-type"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                        </div>
+
+                        <div class="col-span-2 md:col-span-3 bg-blue-900/20 border border-blue-500/30 p-2 rounded mt-2">
+                            <label class="field-label text-blue-300 mb-2"><i class="fas fa-wand-magic-sparkles"></i>
+                                特殊質感疊加 (Effects)</label>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                <label
+                                    class="flex items-center space-x-2 cursor-pointer bg-gray-800 px-2 py-1.5 rounded hover:bg-gray-700 transition border border-transparent hover:border-blue-500/50">
+                                    <input type="checkbox" id="effect-damp-hair"
+                                        value="noticeably damp hair, glistening wet hair texture"
+                                        class="accent-blue-500 w-3.5 h-3.5" onchange="generatePrompt()">
+                                    <span class="text-xs text-gray-300">💧 頭髮微濕</span>
+                                </label>
+
+                                <label
+                                    class="flex items-center space-x-2 cursor-pointer bg-gray-800 px-2 py-1.5 rounded hover:bg-gray-700 transition border border-transparent hover:border-blue-500/50">
+                                    <input type="checkbox" id="effect-wet-skin"
+                                        value="wet skin, sweating, glistening skin" class="accent-blue-500 w-3.5 h-3.5"
+                                        onchange="generatePrompt()">
+                                    <span class="text-xs text-gray-300">💦 濕身汗水</span>
+                                </label>
+
+                                <label
+                                    class="flex items-center space-x-2 cursor-pointer bg-gray-800 px-2 py-1.5 rounded hover:bg-gray-700 transition border border-transparent hover:border-blue-500/50">
+                                    <input type="checkbox" id="effect-oily" value="oiled skin, shiny skin"
+                                        class="accent-blue-500 w-3.5 h-3.5" onchange="generatePrompt()">
+                                    <span class="text-xs text-gray-300">🧴 油光質感</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-800/30 border border-gray-700 p-2 rounded col-span-2 md:col-span-3">
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label class="field-label text-theme"><i class="fas fa-brush"></i> 底妝 (Base)</label>
+                                    <select id="makeup-base"
+                                        class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                                </div>
+                                <div>
+                                    <label class="field-label text-theme"><i class="fas fa-star"></i> 妝容細節 1</label>
+                                    <select id="makeup-detail"
+                                        class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                                </div>
+                                <div>
+                                    <label class="field-label text-theme"><i class="fas fa-star-half-alt"></i> 妝容細節
+                                        2</label>
+                                    <select id="makeup-detail-2"
+                                        class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 mb-4 pb-2 border-b border-gray-800">
+                    <h2 class="text-xl font-bold text-theme"><i class="fas fa-tshirt mr-2"></i>服裝穿搭</h2>
+                </div>
+                <div id="tab-outfit" class="space-y-4">
+
+                    <div
+                        class="col-span-2 mb-2 p-4 bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-lg border border-purple-500/30 shadow-lg">
+                        <label class="field-label text-purple-300 mb-2">
+                            <i class="fas fa-magic mr-2"></i>核心氣質 (Core Vibe)
+                        </label>
+                        <select id="core-vibe"
+                            class="w-full bg-gray-900 border border-purple-500/30 rounded px-3 py-3 text-sm font-medium text-purple-200 focus:outline-none focus:border-purple-400 transition-colors"></select>
+                    </div>
+
+                    <div>
+                        <label class="field-label text-theme"><i class="fas fa-layer-group"></i> 服裝套裝 (Costume
+                            Preset)</label>
+                        <select id="outfit-theme"
+                            class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-3 text-sm font-medium text-gray-100 focus:outline-none"></select>
+                        <input type="text" id="outfit-theme-custom" placeholder="自訂服裝風格或特定服飾 (e.g. wearing a kimono)..."
+                            class="mt-1 w-full bg-gray-800/50 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-theme placeholder-gray-600 transition-colors">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="field-label"><i class="fas fa-hat-cowboy"></i> 頭飾 (Headwear)</label>
+                            <select id="outfit-head"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            <input type="text" id="outfit-head-custom" placeholder="自訂頭飾..."
+                                class="mt-1 w-full bg-gray-800/50 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-theme placeholder-gray-600 transition-colors">
+                        </div>
+                        <div></div>
+                        <div>
+                            <label class="field-label"><i class="fas fa-gem"></i> 主飾品 (Acc)</label>
+                            <select id="outfit-acc"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            <select id="outfit-acc-2"
+                                class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            <input type="text" id="outfit-acc-custom" placeholder="自訂飾品..."
+                                class="mt-1 w-full bg-gray-800/50 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-theme placeholder-gray-600 transition-colors">
+                        </div>
+                        <div><label class="field-label"><i class="fas fa-ring"></i> 飾品細節 (Detail)</label><select
+                                id="outfit-acc-detail"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            <select id="outfit-acc-detail-2"
+                                class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-gray-800/40 p-4 rounded-lg border border-gray-700/50 space-y-4 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 p-2 opacity-10"><i class="fas fa-tshirt text-6xl"></i></div>
+                        <div>
+                            <label class="field-label text-gray-300"><i class="fas fa-vest"></i> 外套 / 罩衫
+                                (Outerwear)</label>
+                            <select id="outfit-outer"
+                                class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            <div id="outfit-outer-state" class="mt-2 space-x-4 hidden">
+                                <label class="cursor-pointer text-xs">
+                                    <input type="radio" name="outfit-outer-state" value="closed" class="accent-theme"
+                                        checked onchange="generatePrompt()">
+                                    封閉 (Closed)
+                                </label>
+                                <label class="cursor-pointer text-xs">
+                                    <input type="radio" name="outfit-outer-state" value="open" class="accent-theme"
+                                        onchange="generatePrompt()">
+                                    敞開 (Open)
+                                </label>
+                            </div>
+                            <input type="text" id="outfit-outer-custom" placeholder="自訂外套..."
+                                class="mt-1 w-full bg-gray-800/50 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-theme placeholder-gray-600 transition-colors">
+                        </div>
+                        <div>
+                            <label class="field-label text-gray-300"><i class="fas fa-shirt"></i> 上衣 (Top)</label>
+                            <select id="outfit-top"
+                                class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm mb-2 focus:outline-none"></select>
+                            <input type="text" id="outfit-top-custom" placeholder="自訂上衣..."
+                                class="mb-2 w-full bg-gray-800/50 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-theme placeholder-gray-600 transition-colors">
+                            <div class="grid grid-cols-3 gap-2">
+                                <div><label class="text-[9px] text-gray-500 block text-center">顏色</label><select
+                                        id="top-color"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs focus:outline-none"></select>
+                                </div>
+                                <div><label class="text-[9px] text-gray-500 block text-center">材質</label><select
+                                        id="top-mat"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs focus:outline-none"></select>
+                                </div>
+                                <div><label class="text-[9px] text-gray-500 block text-center">花紋</label><select
+                                        id="top-pat"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs focus:outline-none"></select>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <label class="field-label text-theme"><i class="fas fa-arrows-alt-h"></i> 穿著效果 (Fit &
+                                    Physics)</label>
+                                <select id="outfit-fit-physics"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="field-label text-gray-300"><i class="fas fa-user-tag"></i> 下著 (Bottom)</label>
+                            <select id="outfit-bottom"
+                                class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm mb-2 focus:outline-none"></select>
+                            <input type="text" id="outfit-bottom-custom" placeholder="自訂下著..."
+                                class="mb-2 w-full bg-gray-800/50 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-theme placeholder-gray-600 transition-colors">
+                            <div class="grid grid-cols-3 gap-2">
+                                <div><label class="text-[9px] text-gray-500 block text-center">顏色</label><select
+                                        id="bottom-color"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs focus:outline-none"></select>
+                                </div>
+                                <div><label class="text-[9px] text-gray-500 block text-center">材質</label><select
+                                        id="bottom-mat"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs focus:outline-none"></select>
+                                </div>
+                                <div><label class="text-[9px] text-gray-500 block text-center">花紋</label><select
+                                        id="bottom-pat"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs focus:outline-none"></select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="field-label"><i class="fas fa-socks"></i> 襪子 (Socks)</label>
+                            <select id="outfit-sock"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            <input type="text" id="outfit-sock-custom" placeholder="自訂襪子..."
+                                class="mt-1 w-full bg-gray-800/50 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-theme placeholder-gray-600 transition-colors">
+                        </div>
+                        <div>
+                            <label class="field-label"><i class="fas fa-shoe-prints"></i> 鞋履 (Shoes)</label>
+                            <select id="outfit-shoe"
+                                class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            <input type="text" id="outfit-shoe-custom" placeholder="自訂鞋履..."
+                                class="mt-1 w-full bg-gray-800/50 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-theme placeholder-gray-600 transition-colors">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 mb-4 pb-2 border-b border-gray-800">
+                    <h2 class="text-xl font-bold text-theme"><i class="fas fa-film mr-2"></i>場景與鏡頭</h2>
+                </div>
+                <div id="tab-scene" class="space-y-5">
+                    <div
+                        class="bg-gradient-to-br from-gray-900 to-gray-800 p-4 rounded-lg border border-theme border-opacity-30">
+                        <p
+                            class="text-xs text-theme font-bold uppercase mb-3 border-b border-theme border-opacity-30 pb-2">
+                            <i class="fas fa-running mr-1"></i> 動作與表情 (Action)
+                        </p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="field-label"><i class="fas fa-child"></i> 基礎姿勢 (Pose)</label>
+                                <select id="action-pose"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                                <input type="text" id="action-pose-custom" placeholder="自訂姿勢細節..."
+                                    class="mt-1 w-full bg-gray-800/50 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-theme placeholder-gray-600 transition-colors">
+                            </div>
+                            <div><label class="field-label"><i class="fas fa-skating"></i> 互動行為
+                                    (Activity)</label><select id="action-activity"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="field-label"><i class="fas fa-laugh"></i> 臉部表情 (Expression)</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <select id="action-expression"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                                <select id="action-expression-2"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-gray-900 to-gray-800 p-4 rounded-lg border border-blue-500/30">
+                        <p class="text-xs text-blue-300 font-bold uppercase mb-3 border-b border-blue-500/30 pb-2"><i
+                                class="fas fa-image mr-1"></i> 環境與氛圍 (Atmosphere)</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="field-label"><i class="fas fa-clock"></i> 時間 (Time)</label><select
+                                    id="scene-time"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            </div>
+                            <div>
+                                <label class="field-label"><i class="fas fa-map-marked-alt"></i> 地點 (Location)</label>
+                                <select id="scene-loc"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                                <input type="text" id="scene-loc-custom" placeholder="自訂地點細節..."
+                                    class="mt-1 w-full bg-gray-800/50 border border-gray-700 rounded px-2 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-theme placeholder-gray-600 transition-colors">
+                            </div>
+
+                            <div><label class="field-label"><i class="fas fa-box-open"></i> 環境裝飾 (Props)</label><select
+                                    id="scene-props"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            </div>
+                            <div><label class="field-label"><i class="fas fa-search-plus"></i> 裝飾細節
+                                    (Detail)</label><select id="scene-props-detail"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            </div>
+
+                            <div><label class="field-label"><i class="fas fa-cloud-sun"></i> 天氣 (Weather)</label><select
+                                    id="scene-weather"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            </div>
+                            <div><label class="field-label"><i class="fas fa-lightbulb"></i> 光影
+                                    (Lighting)</label><select id="scene-lighting"
+                                    class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-gray-800">
+                        <p class="text-xs text-gray-500 font-bold uppercase mb-3"><i
+                                class="fas fa-camera-retro mr-1"></i> 攝影機設定</p>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            <div><label class="field-label"><i class="fas fa-circle-notch"></i> 焦段 (Lens)</label><select
+                                    id="cam-lens"
+                                    class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                            </div>
+                            <div><label class="field-label"><i class="fas fa-circle"></i> 光圈 (Aperture)</label><select
+                                    id="cam-aperture"
+                                    class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                            </div>
+                            <div><label class="field-label"><i class="fas fa-th"></i> 構圖法則 (Composition)</label><select
+                                    id="scene-composition"
+                                    class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                            </div>
+                            <div><label class="field-label"><i class="fas fa-crop-alt"></i> 景別 (Shot)</label><select
+                                    id="cam-shot"
+                                    class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                            </div>
+                            <div><label class="field-label"><i class="fas fa-camera"></i> 寫實風格 (Style)</label><select
+                                    id="scene-style-realistic"
+                                    class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                            </div>
+                            <div><label class="field-label"><i class="fas fa-magic"></i> 特殊效果 (Effects)</label><select
+                                    id="scene-style-special"
+                                    class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                            </div>
+                            <div><label class="field-label"><i class="fas fa-video"></i> 視角 (Angle)</label><select
+                                    id="cam-angle"
+                                    class="w-full bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                                <select id="cam-angle-2"
+                                    class="mt-1 w-full bg-gray-800 border border-gray-700 rounded px-2 py-2 text-xs focus:outline-none"></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-5 flex flex-col gap-4 sticky top-4 h-[calc(100vh-2rem)]">
+            <div>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <button onclick="randomAll()"
+                        class="bg-gray-800 hover:bg-gray-700 text-sm font-bold py-3 rounded border border-gray-700 flex justify-center items-center gap-2 transition hover:border-theme hover:text-theme shadow-md group">
+                        <i class="fas fa-dice text-lg group-hover:rotate-12 transition-transform"></i>
+                        智慧隨機
+                    </button>
+                    <button onclick="addToFavorites()"
+                        class="bg-gray-800 hover:bg-gray-700 text-sm font-bold py-3 rounded border border-gray-700 flex justify-center items-center gap-2 transition hover:border-emerald-500 hover:text-emerald-400 shadow-md group">
+                        <i class="fas fa-star text-lg group-hover:scale-110 transition-transform"></i>
+                        收藏預設
+                    </button>
+                </div>
+            </div>
+
+            <!-- 我的最愛收藏 -->
+            <div class="bg-black p-4 rounded-xl border border-gray-800 flex flex-col max-h-[200px]">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-xs font-bold text-gray-500 uppercase"><i class="fas fa-star mr-1"></i> 我的最愛
+                        (Favorites)</label>
+                    <button onclick="clearFavorites()"
+                        class="text-[10px] text-gray-600 hover:text-red-400">清除全部</button>
+                </div>
+                <div id="favorites-list" class="flex-grow overflow-y-auto custom-scrollbar space-y-2 pr-1">
+                    <p class="text-center text-gray-700 py-4 text-xs italic">暫無收藏</p>
+                </div>
+            </div>
+
+            <div
+                class="bg-black p-5 rounded-xl border border-theme border-opacity-30 flex-grow flex flex-col shadow-lg relative transition-all">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="text-sm font-bold text-theme tracking-wider">POSITIVE PROMPT 提示詞:</label>
+                    <span id="mode-status"
+                        class="text-xs font-bold px-2 py-0.5 rounded bg-gray-800 text-gray-400">模式未定</span>
+                </div>
+                <textarea id="output-text" readonly
+                    class="flex-grow bg-gray-900/50 text-gray-300 text-sm p-4 rounded-lg border border-gray-800 font-mono resize-none outline-none leading-relaxed focus:border-theme transition-colors"></textarea>
+                <button onclick="copyPrompt('output-text')"
+                    class="mt-3 w-full bg-theme-soft border border-theme text-theme hover:bg-gray-800 py-3 rounded-lg font-bold text-sm transition-all shadow-lg flex items-center justify-center gap-2">
+                    <i class="fas fa-copy"></i> 複製提示詞
+                </button>
+            </div>
+
+            <div class="bg-black p-4 rounded-xl border border-gray-800 h-1/4 flex flex-col">
+                <label class="text-xs font-bold text-gray-500 mb-2 uppercase"><i class="fas fa-ban mr-1"></i> Negative
+                    Prompt 負面提示:</label>
+                <textarea id="negative-text"
+                    class="flex-grow bg-gray-900/50 text-gray-500 text-xs p-3 rounded-lg border border-gray-800 font-mono resize-none outline-none focus:border-gray-600">Negative Prompt: avoid AI-like appearance, low saturation, low quality, worst quality, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, blurry, signature, watermark, text, error, jpeg artifacts, username, artist name, cartoon illustrations, 3D animation, low quality, worst quality, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, blurry, signature, watermark, text, error, jpeg artifacts, username, artist name</textarea>
+                <button onclick="copyAllPrompts()"
+                    class="mt-2 w-full bg-gray-700 hover:bg-gray-600 text-gray-300 py-2 rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-paste"></i> 複製全部提示詞 (Prompt + Negative)
+                </button>
+            </div>
+
+            <!-- 最近生成紀錄 -->
+            <div
+                class="bg-black p-4 rounded-xl border border-gray-800 flex-grow overflow-hidden flex flex-col max-h-[300px]">
+                <div class="flex justify-between items-center mb-3">
+                    <label class="text-xs font-bold text-gray-500 uppercase"><i class="fas fa-history mr-1"></i> 最近生成
+                        (History)</label>
+                    <button onclick="clearHistory()" class="text-[10px] text-gray-600 hover:text-red-400">清除全部</button>
+                </div>
+                <div id="history-list" class="flex-grow overflow-y-auto custom-scrollbar space-y-2 pr-1">
+                    <p class="text-center text-gray-700 py-8 text-xs italic">暫無生成紀錄</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="w-full max-w-7xl mt-8 mb-12 flex justify-center items-center">
+        <a href="https://www.facebook.com/MyGenAIPrompt" target="_blank"
+            class="flex items-center gap-2 text-gray-500 hover:text-theme transition-colors px-4 py-2 rounded-full border border-transparent hover:border-gray-800 hover:bg-gray-900">
+            <i class="fab fa-facebook text-xl"></i>
+            <span class="font-bold text-sm">追蹤我們 / 聯絡方式</span>
+        </a>
+    </footer>
+
+    <div
+        class="modal opacity-0 pointer-events-none fixed w-full h-full top-0 left-0 flex items-center justify-center z-50">
+        <div class="modal-overlay absolute w-full h-full bg-black opacity-75" onclick="toggleModal()"></div>
+        <div
+            class="modal-container bg-gray-900 w-11/12 md:max-w-lg mx-auto rounded-xl shadow-2xl border border-theme z-50 overflow-y-auto max-h-[90vh]">
+            <div class="modal-content py-6 text-left px-8">
+                <div class="flex justify-between items-center pb-3 border-b border-gray-700">
+                    <p class="text-2xl font-bold text-theme">平台與模型推薦指南</p>
+                    <div class="modal-close cursor-pointer z-50" onclick="toggleModal()">
+                        <i class="fas fa-times text-gray-400 hover:text-white text-xl"></i>
+                    </div>
+                </div>
+                <div class="space-y-6 text-sm text-gray-300 mt-4">
+                    <div>
+                        <h3 class="text-white font-bold text-lg mb-2 flex items-center"><i
+                                class="fas fa-globe mr-2 text-blue-400"></i>網上使用</h3>
+                        <p class="mb-3 text-gray-400">大廠 AI (Gemini/Meta AI) 審查極嚴，請務必使用本工具的 <span
+                                class="text-emerald-400 font-bold">✅ 清純版</span> 模式。</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="bg-gray-800/50 p-3 rounded border border-green-600/50">
+                                <span class="text-emerald-400 font-bold block mb-1">✅ 寬鬆平台 (推薦)</span>
+                                <ul class="list-disc pl-4 text-xs space-y-1">
+                                    <li><strong>Civitai / Tensor.art / SeaArt</strong></li>
+                                    <li><strong>Grok (xAI)</strong></li>
+                                </ul>
+                            </div>
+                            <div class="bg-gray-800/50 p-3 rounded border border-red-600/50">
+                                <span class="text-red-400 font-bold block mb-1">⚠️ 嚴格平台</span>
+                                <ul class="list-disc pl-4 text-xs space-y-1">
+                                    <li><strong>Google Gemini / Meta AI</strong>：禁止「Tight」、「Latex」、「Bust」等。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 pt-3 border-t border-gray-700 flex justify-end">
+                    <button
+                        class="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded text-xs transition shadow-lg border border-gray-600"
+                        onclick="toggleModal()">我了解了 (Close)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let db = {};
+        let currentMode = 'sexy';
+
+        function showToast(message, icon = 'fa-check-circle') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="fas ${icon}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+
+            // Trigger reflow
+            toast.offsetHeight;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        const v = (id) => document.getElementById(id)?.value || "";
+        const c = (id) => document.getElementById(id)?.checked || false;
+
+        async function init() {
+            try {
+                const [charRes, outfitRes, sceneRes] = await Promise.all([
+                    fetch('db_character.json'), fetch('db_outfit.json'), fetch('db_scene_camera.json')
+                ]);
+                const d1 = await charRes.json();
+                const d2 = await outfitRes.json();
+                const d3 = await sceneRes.json();
+                db = { ...d1, ...d2, ...d3 };
+
+                // 將所有外套選項扁平化以便查找
+                db.flatOutfitOuter = db.outfitOuter.reduce((acc, group) => {
+                    if (group.options) acc.push(...group.options);
+                    else acc.push(group);
+                    return acc;
+                }, []);
+
+                // 讀取儲存的角色名稱
+                const savedName = localStorage.getItem('wm_char_name');
+                if (savedName) {
+                    document.getElementById('char-name').value = savedName;
+                }
+
+                setMode('sexy');
+            } catch (err) {
+                console.log("Database load error:", err);
+            }
+        }
+
+        function isAllowed(item, mode) {
+            if (item.tags) {
+                if (item.tags.includes('nsfw') && mode !== 'nsfw') return false;
+                if (item.tags.includes('sexy') && mode === 'clean') return false;
+            }
+            return true;
+        }
+
+        function populateAllMenus() {
+            // Identity
+            populate('race', db.race); populate('char-age', db.charAge);
+            populate('body-height', db.bodyHeight);
+            populate('body-type', db.bodyType); // <--- 加入 body-type
+            populate('body-bust', db.bodyBust);
+            populate('body-waist', db.bodyWaist); populate('body-hip', db.bodyHip);
+            populate('hair-style', db.hairStyle); populate('hair-color', db.hairColor);
+            populate('eye-color', db.eyeColor); populate('face-shape', db.faceShape);
+            populate('skin-type', db.skinType);
+            populate('makeup-base', db.makeupBase); populate('makeup-detail', db.makeupDetail); populate('makeup-detail-2', db.makeupDetail);
+
+            // Outfit
+            populate('core-vibe', db.coreVibe); // <--- Core Vibe moved found JSON
+            populate('outfit-theme', db.outfitTheme); populate('outfit-head', db.outfitHead);
+            populate('outfit-acc', db.outfitAcc); populate('outfit-acc-2', db.outfitAcc); populate('outfit-acc-detail', db.outfitAccDetail); populate('outfit-acc-detail-2', db.outfitAccDetail);
+            populate('outfit-outer', db.outfitOuter);
+            populate('outfit-top', db.outfitTop); populate('outfit-bottom', db.outfitBottom);
+            populate('outfit-fit-physics', db.outfitFitPhysics); // <--- New Physics Category
+            populate('outfit-sock', db.outfitSock); populate('outfit-shoe', db.outfitShoe);
+            ['top-color', 'bottom-color'].forEach(id => populate(id, db.itemColors));
+            ['top-mat', 'bottom-mat'].forEach(id => populate(id, db.itemMaterials));
+            ['top-pat', 'bottom-pat'].forEach(id => populate(id, db.itemPatterns));
+
+            // Scene
+            populate('action-pose', db.actionPose); populate('action-activity', db.actionActivity);
+            populate('action-expression', db.actionExpression); populate('action-expression-2', db.actionExpression);
+            populate('scene-loc', db.sceneLoc);
+            populate('scene-props', db.sceneProps); populate('scene-props-detail', db.scenePropsDetail);
+            populate('scene-lighting', db.sceneLighting);
+            populate('scene-time', db.sceneTime); populate('scene-weather', db.sceneWeather);
+            populate('cam-angle', db.camAngle);
+            populate('cam-angle-2', db.camAngle);
+            populate('cam-shot', db.camShot);
+            populate('cam-lens', db.camLens);
+            populate('scene-style-realistic', db.sceneStyleRealistic);
+            populate('scene-style-special', db.sceneStyleSpecial);
+            populate('scene-composition', db.sceneComposition);
+            populate('cam-aperture', db.camAperture);
+
+            updateVisualFeedback();
+        }
+
+        function populate(id, data) {
+            const el = document.getElementById(id);
+            if (!el || !data) return;
+            const currentVal = el.value;
+            el.innerHTML = '<option value="">-- 隨機/無 --</option>';
+            data.forEach(item => {
+                if (item.group) {
+                    const validOptions = item.options.filter(opt => isAllowed(opt, currentMode));
+                    if (validOptions.length > 0) {
+                        const group = document.createElement('optgroup');
+                        group.label = item.group;
+                        validOptions.forEach(sub => {
+                            const opt = document.createElement('option');
+                            // For outfit-outer, use 'key' if available, otherwise 'value'
+                            opt.value = id === 'outfit-outer' && sub.key ? sub.key : sub.value;
+                            opt.innerText = sub.label;
+                            group.appendChild(opt);
+                        });
+                        el.appendChild(group);
+                    }
+                } else if (isAllowed(item, currentMode)) {
+                    const opt = document.createElement('option');
+                    opt.value = item.value;
+                    opt.innerText = item.label;
+                    el.appendChild(opt);
+                }
+            });
+            const exists = Array.from(el.options).some(o => o.value === currentVal);
+            el.value = exists ? currentVal : "";
+            if (id === 'outfit-outer') {
+                handleOuterwearChange(); // Initial check
+            }
+        }
+
+        function handleOuterwearChange() {
+            const outerKey = v('outfit-outer');
+            const outerStateDiv = document.getElementById('outfit-outer-state');
+            if (!outerKey || !db.flatOutfitOuter) {
+                outerStateDiv.classList.add('hidden');
+                return;
+            }
+
+            const selectedOuter = db.flatOutfitOuter.find(o => o.key === outerKey);
+
+            if (selectedOuter && selectedOuter.open && selectedOuter.closed) {
+                outerStateDiv.classList.remove('hidden');
+            } else {
+                outerStateDiv.classList.add('hidden');
+            }
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.body.className = `bg-gray-950 text-gray-100 min-h-screen p-4 flex flex-col items-center mode-${mode}`;
+
+            ['clean', 'sexy', 'nsfw'].forEach(m => {
+                document.getElementById(`btn-${m}`).classList.toggle('mode-active', m === mode);
+            });
+
+            const statusEl = document.getElementById('mode-status');
+            const bustWarn = document.getElementById('bust-warn');
+            const bustContainer = document.getElementById('bust-container');
+            const nsfwEffects = ['effect-wet-skin', 'effect-oily'];
+
+            if (mode === 'clean') {
+                statusEl.innerText = "✅ 清純版 (Gemini Safe)";
+                statusEl.className = "text-xs font-bold px-2 py-0.5 rounded bg-emerald-900 text-emerald-300";
+                bustWarn.classList.remove('hidden');
+                bustContainer.classList.add('hidden'); // 修改：在清純模式隱藏 bustContainer
+                nsfwEffects.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) { el.checked = false; el.parentElement.classList.add('hidden'); }
+                });
+                // Also reset bust values
+                ['body-bust', 'body-waist', 'body-hip'].forEach(id => document.getElementById(id).value = "");
+            } else {
+                statusEl.innerText = mode === 'sexy' ? "💜 性感版 (Standard)" : "🔞 NSFW版 (Uncensored)";
+                statusEl.className = `text-xs font-bold px-2 py-0.5 rounded ${mode === 'sexy' ? 'bg-pink-900 text-pink-300' : 'bg-red-900 text-red-300'}`;
+                bustWarn.classList.add('hidden');
+                bustContainer.classList.remove('hidden');
+                bustContainer.classList.remove('opacity-50', 'pointer-events-none');
+                nsfwEffects.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.parentElement.classList.remove('hidden');
+                });
+            }
+
+            // Sync character name value back to input if it's empty
+            if (!v('char-name')) document.getElementById('char-name').value = "MyModel";
+
+            populateAllMenus();
+            generatePrompt();
+        }
+
+        function updateVisualFeedback() {
+            document.querySelectorAll('select, input[type="text"]').forEach(el => {
+                const hasValue = el.value && el.value.trim() !== "";
+                el.classList.toggle('has-value', hasValue);
+            });
+        }
+
+        // Helper to inject attributes (color, pattern, material) into outfit descriptions
+        function injectAttributes(description, color, pattern, material) {
+            if (!description) return "";
+            let attrs = [color, pattern, material].filter(Boolean).join(" ");
+            if (!attrs) return description;
+
+            // Try to insert after "wearing a" or "wearing an"
+            let match = description.match(/^(wearing an?)\s+/i);
+            if (match) {
+                return description.replace(match[0], `${match[0]}${attrs} `);
+            }
+
+            // Try to insert after leading "a" or "an"
+            match = description.match(/^(an?)\s+/i);
+            if (match) {
+                return description.replace(match[0], `${match[0]} ${attrs} `).replace(/\s+/g, ' ');
+            }
+
+            // Otherwise, prepend
+            return `${attrs} ${description}`;
+        }
+
+        function generatePrompt() {
+            updateVisualFeedback();
+
+            let prompts = [];
+
+            // 1. [攝影風格/光影] (Camera & Style & Vibe)
+            let cam = [
+                v('cam-angle'), v('cam-angle-2'), v('cam-shot'), v('cam-lens'), v('cam-aperture'),
+                v('scene-style-realistic'), v('scene-style-special'), v('scene-composition'),
+                v('scene-lighting'), v('scene-time'), v('scene-weather')
+            ].filter(Boolean);
+
+            const vibe = v('core-vibe');
+            if (vibe) cam.push(vibe);
+
+            if (cam.length) prompts.push(cam.join(", "));
+
+            // 2. [MyModel DNA] (Identity & Physical Features)
+            let dna = [`Analog photograph of ${v('char-name')}`];
+            if (v('char-age') || v('race')) dna.push(`a ${v('char-age')} ${v('race')} female`.replace(/\s+/g, ' ').trim());
+
+            let feats = [
+                (v('hair-color') + ' ' + v('hair-style')).trim(),
+                c('effect-damp-hair') ? 'noticeably damp hair, glistening wet hair texture' : '',
+                c('effect-wet-skin') ? 'wet skin, sweating, glistening skin' : '',
+                c('effect-oily') ? 'oiled skin, shiny skin' : '',
+                v('eye-color'),
+                v('face-shape'),
+                v('skin-type'),
+                [v('makeup-base'), v('makeup-detail'), v('makeup-detail-2')].filter(Boolean).join(", "),
+                v('body-height'),
+                v('body-type')
+            ].filter(s => s && s.trim().length > 1);
+
+            // NSFW Body
+            if (currentMode !== 'clean') {
+                let bodyStats = [v('body-bust'), v('body-waist'), v('body-hip')].filter(Boolean);
+                if (bodyStats.length > 0) prompts.push(`body: ${bodyStats.join(", ")}`);
+            }
+
+            if (feats.length) dna.push(feats.join(", "));
+
+            // Clean up DNA array and join properly
+            let dnaStr = dna.filter(s => s && s.trim().length > 0).join(", ");
+            if (dnaStr) prompts.push(dnaStr);
+
+            // 3. [使用者場景細節] (Location & Props)
+            let loc = v('scene-loc');
+            let locCustom = v('scene-loc-custom');
+            let fullLoc = [loc, locCustom].filter(Boolean).join(", ");
+
+            let props = v('scene-props');
+            let propsDetail = v('scene-props-detail');
+            let sceneParts = [];
+            if (fullLoc) sceneParts.push(`Location: ${fullLoc}`);
+            if (props) sceneParts.push(props);
+            if (propsDetail) sceneParts.push(propsDetail);
+
+            if (sceneParts.length) prompts.push(sceneParts.join(", "));
+
+            // 4. [動作與表情] (Pose & Action & Expression)
+            let pose = v('action-pose');
+            let poseCustom = v('action-pose-custom');
+            let fullPose = [pose, poseCustom].filter(Boolean).join(", ");
+
+            let activity = v('action-activity');
+            let expr1 = v('action-expression');
+            let expr2 = v('action-expression-2');
+            let exprCombined = [expr1, expr2].filter(Boolean).join(", ");
+
+            let act = (fullPose && activity) ? `She is ${fullPose} while ${activity}` : (fullPose || activity || "");
+            if (exprCombined) act = act ? `${act}, with ${exprCombined}` : `She has ${exprCombined}`;
+            if (act) prompts.push(act);
+
+            // 5. [服裝] (Outfit)
+            let outfit = [];
+            if (v('outfit-theme')) outfit.push(`Style: ${v('outfit-theme')}`);
+            if (v('outfit-theme-custom')) outfit.push(v('outfit-theme-custom'));
+
+            let fullHead = [v('outfit-head'), v('outfit-head-custom')].filter(Boolean).join(", ");
+            if (fullHead) outfit.push(fullHead);
+
+            let fullAcc = [v('outfit-acc'), v('outfit-acc-2'), v('outfit-acc-custom')].filter(Boolean).join(", ");
+            if (fullAcc) outfit.push(fullAcc);
+
+            if (v('outfit-acc-detail')) outfit.push(v('outfit-acc-detail'));
+            if (v('outfit-acc-detail-2')) outfit.push(v('outfit-acc-detail-2'));
+
+            const outerKey = v('outfit-outer');
+            if (outerKey) {
+                const selectedOuter = db.flatOutfitOuter.find(o => o.key === outerKey);
+                if (selectedOuter) {
+                    const state = document.querySelector('input[name="outfit-outer-state"]:checked').value;
+                    outfit.push(selectedOuter[state] || selectedOuter.value);
+                } else {
+                    outfit.push(outerKey);
+                }
+            }
+            if (v('outfit-outer-custom')) outfit.push(v('outfit-outer-custom'));
+
+            let top = v('outfit-top');
+            if (top) {
+                let attrTop = injectAttributes(top, v('top-color'), v('top-pat'), v('top-mat'));
+                outfit.push(attrTop);
+                let physics = v('outfit-fit-physics') || autoInjectPhysics(top);
+                if (physics) outfit.push(physics);
+            }
+            if (v('outfit-top-custom')) outfit.push(v('outfit-top-custom'));
+
+            let bottom = v('outfit-bottom');
+            if (bottom) {
+                let attrBot = injectAttributes(bottom, v('bottom-color'), v('bottom-pat'), v('bottom-mat'));
+                outfit.push(attrBot);
+            }
+            if (v('outfit-bottom-custom')) outfit.push(v('outfit-bottom-custom'));
+
+            let fullSock = [v('outfit-sock'), v('outfit-sock-custom')].filter(Boolean).join(", ");
+            if (fullSock) outfit.push(fullSock);
+
+            let fullShoe = [v('outfit-shoe'), v('outfit-shoe-custom')].filter(Boolean).join(", ");
+            if (fullShoe) outfit.push(fullShoe);
+
+            // 若未指定顯眼的服裝，則搭配顯身材的穿搭
+            if (outfit.length === 0 && currentMode !== 'clean') {
+                outfit.push("emphasizing her feminine silhouette");
+            }
+
+            let outfitStr = outfit.filter(Boolean).join(", ");
+            if (outfitStr) prompts.push(outfitStr);
+
+            // NSFW & Endings
+            if (currentMode === 'nsfw') prompts.push("NSFW, detailed skin, mature female");
+
+            // Final build & Clean
+            let final = prompts.filter(p => p && p.trim()).join(". ");
+
+            // Final Sanitization: fix redundant dots/commas
+            final = final.replace(/\.\s*\./g, '.')
+                .replace(/,\s*,/g, ',')
+                .replace(/,\s*\./g, '.')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            document.getElementById('output-text').value = final;
+        }
+
+        function scrollToSection(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const offset = 80;
+            const elementPosition = el.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+            window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+        }
+
+        window.addEventListener('scroll', () => {
+            const sections = ['tab-identity', 'tab-outfit', 'tab-scene'];
+            const scrollPos = window.scrollY + 120;
+            let current = sections[0];
+            for (const id of sections) {
+                const el = document.getElementById(id);
+                if (el && el.offsetTop <= scrollPos) {
+                    current = id;
+                }
+            }
+            sections.forEach(id => {
+                document.getElementById('btn-' + id)?.classList.toggle('tab-active', id === current);
+                document.getElementById('btn-' + id)?.classList.toggle('tab-inactive', id !== current);
+            });
+        });
+
+        function toggleModal() {
+            const m = document.querySelector('.modal');
+            m.classList.toggle('opacity-0');
+            m.classList.toggle('pointer-events-none');
+        }
+
+        function copyPrompt(id) {
+            const t = document.getElementById(id);
+            t.select();
+            const val = t.value;
+            navigator.clipboard.writeText(val).then(() => {
+                showToast("已複製提示詞到剪貼簿！");
+                addToHistory(val);
+            });
+        }
+
+        function copyAllPrompts() {
+            const positive = document.getElementById('output-text').value;
+            const negative = document.getElementById('negative-text').value;
+            const combined = positive + "\n" + negative;
+            navigator.clipboard.writeText(combined).then(() => {
+                showToast("已複製全部提示詞！");
+                addToHistory(positive);
+            });
+        }
+
+        function addToHistory(prompt) {
+            if (!prompt || prompt.length < 10) return;
+            let history = JSON.parse(localStorage.getItem('wm_history') || '[]');
+            // 移除重複並放在最前面
+            history = history.filter(p => p !== prompt);
+            history.unshift(prompt);
+            // 只保留最近 10 筆
+            if (history.length > 10) history.pop();
+            localStorage.setItem('wm_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('history-list');
+            const history = JSON.parse(localStorage.getItem('wm_history') || '[]');
+            if (history.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-700 py-8 text-xs italic">暫無生成紀錄</p>';
+                return;
+            }
+            container.innerHTML = history.map((p, i) => `
+                <div class="history-item bg-gray-900/40 p-2 rounded cursor-pointer group relative" onclick="applyHistory(${i})">
+                    <p class="text-[10px] text-gray-400 line-clamp-2 pr-6">${p}</p>
+                    <button onclick="event.stopPropagation(); deleteHistoryItem(${i})" class="absolute right-1 top-2 text-gray-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function applyHistory(index) {
+            const history = JSON.parse(localStorage.getItem('wm_history') || '[]');
+            if (history[index]) {
+                document.getElementById('output-text').value = history[index];
+                showToast("已讀回歷史紀錄！", "fa-history");
+            }
+        }
+
+        function deleteHistoryItem(index) {
+            let history = JSON.parse(localStorage.getItem('wm_history') || '[]');
+            history.splice(index, 1);
+            localStorage.setItem('wm_history', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function clearHistory() {
+            if (confirm("確定要清除所有歷史紀錄嗎？")) {
+                localStorage.removeItem('wm_history');
+                renderHistory();
+                showToast("歷史紀錄已清除", "fa-trash");
+            }
+        }
+
+        // --- 我的最愛功能 (Favorites) ---
+
+        function getAllConfig() {
+            const config = {
+                mode: currentMode,
+                inputs: {},
+                checkboxes: {},
+                radios: {}
+            };
+
+            // Capture all selects and text inputs
+            document.querySelectorAll('select, input[type="text"]').forEach(el => {
+                if (el.id) config.inputs[el.id] = el.value;
+            });
+
+            // Capture all checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(el => {
+                if (el.id) config.checkboxes[el.id] = el.checked;
+            });
+
+            // Capture specific radios (like outer-state)
+            const outerState = document.querySelector('input[name="outfit-outer-state"]:checked');
+            if (outerState) config.radios['outfit-outer-state'] = outerState.value;
+
+            return config;
+        }
+
+        function applyAllConfig(config) {
+            if (!config) return;
+
+            // Apply Mode first (triggers repopulate)
+            if (config.mode) setMode(config.mode);
+
+            // Apply inputs
+            if (config.inputs) {
+                Object.keys(config.inputs).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = config.inputs[id];
+                });
+            }
+
+            // Apply checkboxes
+            if (config.checkboxes) {
+                Object.keys(config.checkboxes).forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.checked = config.checkboxes[id];
+                });
+            }
+
+            // Apply radios
+            if (config.radios) {
+                Object.keys(config.radios).forEach(name => {
+                    const el = document.querySelector(`input[name="${name}"][value="${config.radios[name]}"]`);
+                    if (el) el.checked = true;
+                });
+            }
+
+            // Refresh UI states
+            handleOuterwearChange();
+            generatePrompt();
+        }
+
+        function addToFavorites() {
+            const label = prompt("請輸入收藏標籤 (例如: 日本御姐、性感居家):");
+            if (!label) return;
+
+            const config = getAllConfig();
+            let favorites = JSON.parse(localStorage.getItem('wm_favorites') || '[]');
+            favorites.unshift({ label, config, date: new Date().toLocaleDateString() });
+            localStorage.setItem('wm_favorites', JSON.stringify(favorites));
+            renderFavorites();
+            showToast(`已收藏: ${label}`, "fa-star");
+        }
+
+        function renderFavorites() {
+            const container = document.getElementById('favorites-list');
+            const favorites = JSON.parse(localStorage.getItem('wm_favorites') || '[]');
+            if (favorites.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-700 py-4 text-xs italic">暫無收藏</p>';
+                return;
+            }
+            container.innerHTML = favorites.map((f, i) => `
+                <div class="history-item bg-gray-900/60 p-2 rounded cursor-pointer group relative border-l-2 border-emerald-500/30 hover:border-emerald-500" onclick="applyFavorite(${i})">
+                    <div class="flex justify-between items-center pr-6">
+                        <span class="text-xs font-bold text-emerald-400 truncate">${f.label}</span>
+                        <span class="text-[9px] text-gray-600">${f.date}</span>
+                    </div>
+                    <button onclick="event.stopPropagation(); deleteFavoriteItem(${i})" class="absolute right-1 top-2.5 text-gray-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function applyFavorite(index) {
+            const favorites = JSON.parse(localStorage.getItem('wm_favorites') || '[]');
+            if (favorites[index]) {
+                applyAllConfig(favorites[index].config);
+                showToast(`已讀取收藏: ${favorites[index].label}`, "fa-star");
+            }
+        }
+
+        function deleteFavoriteItem(index) {
+            let favorites = JSON.parse(localStorage.getItem('wm_favorites') || '[]');
+            const label = favorites[index].label;
+            favorites.splice(index, 1);
+            localStorage.setItem('wm_favorites', JSON.stringify(favorites));
+            renderFavorites();
+            showToast(`已刪除收藏: ${label}`, "fa-trash");
+        }
+
+        function clearFavorites() {
+            if (confirm("確定要清除所有收藏嗎？")) {
+                localStorage.removeItem('wm_favorites');
+                renderFavorites();
+                showToast("收藏已清除", "fa-trash");
+            }
+        }
+
+        function saveCharacter(btn) {
+            const charIds = [
+                'char-name', 'race', 'char-age', 'body-height', 'body-type', // <--- 加入 body-type
+                'body-bust', 'body-waist', 'body-hip',
+                'hair-style', 'hair-color', 'eye-color',
+                'face-shape', 'skin-type', 'makeup-base', 'makeup-detail', 'makeup-detail-2'
+            ];
+            const data = {};
+            charIds.forEach(id => data[id] = v(id));
+            ['effect-damp-hair', 'effect-wet-skin', 'effect-oily'].forEach(id => data[id] = c(id));
+            localStorage.setItem('wm_saved_character', JSON.stringify(data));
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-1.5"></i> 已儲存';
+            setTimeout(() => btn.innerHTML = originalHTML, 1500);
+        }
+
+        function loadCharacter(btn) {
+            const json = localStorage.getItem('wm_saved_character');
+            if (!json) return showToast("尚未儲存任何角色設定", "fa-exclamation-triangle");
+            const data = JSON.parse(json);
+            Object.keys(data).forEach(key => {
+                const el = document.getElementById(key);
+                if (el) {
+                    if (el.type === 'checkbox') el.checked = data[key];
+                    else el.value = data[key];
+                }
+            });
+            generatePrompt();
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check mr-1.5"></i> 已讀取';
+            setTimeout(() => btn.innerHTML = originalHTML, 1500);
+        }
+
+        function randomAll() {
+            document.querySelectorAll('select').forEach(s => {
+                if (!s.disabled && !s.closest('.pointer-events-none') && !s.id.includes('custom')) {
+                    if (s.options.length > 1) {
+                        // For fields like expression-2, acc-2, etc., give a 50% chance to remain empty
+                        if (s.id.endsWith('-2') || s.id.includes('detail-2')) {
+                            s.selectedIndex = Math.random() > 0.5 ? Math.floor(Math.random() * s.options.length) : 0;
+                        } else {
+                            s.selectedIndex = Math.floor(Math.random() * s.options.length);
+                        }
+                    }
+                }
+            });
+            // Randomly check some checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                if (!cb.closest('.pointer-events-none')) cb.checked = Math.random() > 0.7;
+            });
+            generatePrompt();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            init();
+            renderHistory();
+            renderFavorites();
+            document.querySelectorAll('select, input').forEach(el => {
+                el.addEventListener('change', generatePrompt);
+                if (el.type !== 'checkbox' && el.type !== 'radio') {
+                    el.addEventListener('input', generatePrompt);
+                }
+                // 自動儲存角色名稱
+                if (el.id === 'char-name') {
+                    el.addEventListener('input', (e) => {
+                        localStorage.setItem('wm_char_name', e.target.value);
+                    });
+                }
+            });
+            document.getElementById('outfit-outer').addEventListener('change', handleOuterwearChange);
+        });
+
+        function autoInjectPhysics(topValue) {
+            if (!topValue) return "";
+            const lower = topValue.toLowerCase();
+            if (lower.includes('knit') || lower.includes('sweater') || lower.includes('cardigan') || lower.includes('virgin killer')) {
+                return "soft texture, slight stretch, fabric following curves";
+            }
+            if (lower.includes('tight') || lower.includes('form-fitting') || lower.includes('skinny')) {
+                return "high tension fabric, stretching across body, taut fit";
+            }
+            if (lower.includes('shirt') || lower.includes('blouse')) {
+                if (lower.includes('wet') || lower.includes('sheer')) return "clinging to skin, translucent texture";
+                return "fabric gathering, subtle tension points";
+            }
+            return "";
+        }
+    </script>
+
+    <br>
+
+    <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button"
+        data-slug="on9ai" data-color="#ec4899" data-emoji="" data-font="Lato" data-text="Buy Me a Coffee"
+        data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#ffffff">
+        </script>
+</body>
+
+</html>
